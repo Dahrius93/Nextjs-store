@@ -3,11 +3,31 @@
 
 // Get a free hosted Postgres database in seconds: `npx create-db`
 
-generator client {
-  provider = "prisma-client"
-  output   = "../lib/generated/prisma"
-}
+// generator client {
+//   provider = "prisma-client"
+//   output   = "../lib/generated/prisma"
+// }
+
+// datasource db {
+//   provider = "postgresql"
+// }
 
 datasource db {
   provider = "postgresql"
+  // url e directURL vanno su file prisma.config.ts 
+  // per la versione v7 di prisma in uso in questo 
+  // progetto
+  
+  // url = env("DATABASE_URL")
+  // directUrl = env("DIRECT_URL")
 }
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model TestProfile {
+id  String @id @default(uuid())
+name String
+}
+
