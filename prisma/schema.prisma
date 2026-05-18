@@ -27,7 +27,7 @@ generator client {
 }
 
 model TestProfile {
-id  String @id @default(uuid())
+id  String @id @default(uuid()) // id autogenerato
 name String
 }
 
