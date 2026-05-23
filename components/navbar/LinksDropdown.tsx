@@ -53,8 +53,9 @@ function LinksDropdown() {
         <SignedIn>
           {/* Ciclo sui link disponibili per gli utenti loggati */}
           {links.map((link) => {
-            {/* se utente non admin non mostro il pulsante dashboard */}
-            {/* se utente non admin non mostro il pulsante dashboard */}
+            {
+              /* se utente non admin non mostro il pulsante dashboard */
+            }
             if (link.label === "dashboard" && !isAdmin) return null;
             return (
               <DropdownMenuItem key={link.href}>
