@@ -10,7 +10,7 @@ const initialState = {
 };
 
 function FormContainer({
-  action,
+  action, // can be update, create, delete product
   children,
 }: {
   action: actionFunction;
