@@ -82,8 +82,8 @@ export const createProductAction = async (
     });
     // necessario invalidare la cache dopo creazione prodotto altrimenti
     // i prodotti mostrati non vengono aggiornati
-    revalidatePath("/products"); // Ricaricha la cache di /products
-    revalidatePath("/"); // Ricaricha la cache della home
+    revalidatePath("/products"); // Ricarica la cache di "/products"
+    revalidatePath("/"); // Ricarica la cache della home "/"
     return { message: "product created" };
   } catch (error) {
     return renderError(error);
