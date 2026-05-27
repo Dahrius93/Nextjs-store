@@ -15,6 +15,7 @@ function FavoriteToggleForm({
   favoriteId,
 }: FavoriteToggleFormProps) {
   const pathname = usePathname();
+  // con bind passo tutto su prevState
   const toggleAction = toggleFavoriteAction.bind(null, {
     productId,
     favoriteId,

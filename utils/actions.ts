@@ -206,21 +206,41 @@ export const fetchFavoriteId = async ({ productId }: { productId: string }) => {
   return favorite?.id || null;
 };
 
+// Aggiunge o rimuove un prodotto dai preferiti
+//
+// Questa action NON riceve formData — tutti i dati arrivano da prevState.
+// Significa che viene usata con bind(), come il deleteProductAction
+//
+// const toggleFavorite = toggleFavoriteAction.bind(null, {
+//   productId: "prod_1",
+//   favoriteId: "fav_abc123",  // oppure null se non è nei preferiti
+//   pathname: "/products",
+// });
+//
+// bind() "cabla" quei valori come primo argomento (prevState),
+// così quando il form viene sottomesso React li passa automaticamente
+// alla action senza bisogno di hidden input.
 export const toggleFavoriteAction = async (prevState: {
-  productId: string;
-  favoriteId: string | null;
-  pathname: string;
+  productId: string; // il prodotto da aggiungere/rimuovere
+  favoriteId: string | null; // l'id del favorito (null = non è nei preferiti)
+  pathname: string; // la pagina corrente, per aggiornare la cache
 }) => {
+  // Verifica che l'utente sia autenticato
   const user = await getAuthUser();
+
+  // Estrae i dati da prevState (che arrivano da bind)
   const { productId, favoriteId, pathname } = prevState;
+
   try {
     if (favoriteId) {
+      // Se favoriteId esiste → il prodotto È già nei preferiti → RIMUOVI
       await db.favorite.delete({
         where: {
           id: favoriteId,
         },
       });
     } else {
+      // Se favoriteId è null → il prodotto NON è nei preferiti → AGGIUNGI
       await db.favorite.create({
         data: {
           productId,
@@ -228,7 +248,9 @@ export const toggleFavoriteAction = async (prevState: {
         },
       });
     }
+
     revalidatePath(pathname);
+
     return { message: favoriteId ? "Removed from Faves" : "Added to Faves" };
   } catch (error) {
     return renderError(error);
