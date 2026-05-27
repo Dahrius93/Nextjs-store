@@ -131,9 +131,13 @@ npx prisma db push
 npx prisma studio
 
 # Crea una migration formale
+# come push ma genera log visionabile
 npx prisma migrate dev --name init
 
 # Rigenera il client dopo modifiche allo schema
+# se si aggiunge una tabella è necessario eseguirlo
+# per dire a TypeScript di aggiornare la cache
+# altrimenti potrebbe segnare la nuova tabella come errore
 npx prisma generate
 ```
 
@@ -149,7 +153,7 @@ Prisma v7:
   .env (DATABASE_URL)
        ↓
   prisma.config.ts → CLI Prisma (migrate, db push, studio)
-  
+
   .env (DATABASE_URL)
        ↓
   PrismaPg adapter → PrismaClient({ adapter }) → Database

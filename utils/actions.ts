@@ -182,3 +182,30 @@ export const updateProductImageAction = async (
     return renderError(error);
   }
 };
+
+// Controlla se un prodotto è nei preferiti dell'utente corrente
+// Ritorna l'id del favorito se esiste, altrimenti null
+export const fetchFavoriteId = async ({ productId }: { productId: string }) => {
+  // Recupera l'utente autenticato da Clerk
+  const user = await getAuthUser();
+
+  // Cerca nella tabella Favorite un record che corrisponda
+  // a QUESTO utente + QUESTO prodotto
+  const favorite = await db.favorite.findFirst({
+    where: {
+      productId, // il prodotto da verificare
+      clerkId: user.id, // l'utente corrente
+    },
+    select: {
+      id: true, // prende solo campo id, non tutto il record (più efficiente)
+    },
+  });
+
+  // Se il favorito esiste ritorna il suo id (servirà per cancellarlo)
+  // Se non esiste ritorna null (il prodotto non è nei preferiti)
+  return favorite?.id || null;
+};
+
+export const toggleFavoriteAction = async () => {
+  return { message: "toggle favorite action" };
+};

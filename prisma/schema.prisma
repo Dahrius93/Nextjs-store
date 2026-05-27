@@ -27,5 +27,31 @@ model Product {
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
   clerkId  String
+  favorites Favorite[]
+}
+
+model Favorite {
+  // Identificativo univoco del favorito, generato automaticamente come UUID
+  id        String   @id @default(uuid()) 
+
+  // ID dell'utente Clerk che ha messo il prodotto nei preferiti
+  // Non è una foreign key, è solo una stringa per filtrare nelle query
+  clerkId   String
+
+  // Campo virtuale (non esiste come colonna nel DB)
+  // Permette a Prisma di navigare la relazione: favorite.product
+  // onDelete: Cascade → se il prodotto viene cancellato, 
+  // anche questo favorito viene eliminato automaticamente
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade) 
+
+  // Questa è la vera foreign key nel database
+  // Collega questo favorito a un record nella tabella Product tramite il suo id
+  productId String
+
+  // Data di creazione, impostata automaticamente al momento dell'inserimento
+  createdAt DateTime @default(now())
+
+  // Data di ultimo aggiornamento, gestita automaticamente da Prisma ad ogni modifica
+  updatedAt DateTime @updatedAt
 }
 
