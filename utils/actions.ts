@@ -407,6 +407,7 @@ const fetchProduct = async (productId: string) => {
   }
   return product;
 };
+
 const includeProductClause = {
   cartItems: {
     include: {
@@ -426,7 +427,7 @@ export const fetchOrCreateCart = async ({
     where: {
       clerkId: userId,
     },
-    include: includeProductClause,
+    include: includeProductClause, // perchè vogliamo iterare anche su cartItems. quindi includiamo products
   });
 
   if (!cart && errorOnFailure) {
@@ -438,7 +439,7 @@ export const fetchOrCreateCart = async ({
       data: {
         clerkId: userId,
       },
-      include: includeProductClause,
+      include: includeProductClause, // perchè vogliamo iterare anche su cartItems. quindi includiamo products
     });
   }
 
@@ -498,7 +499,7 @@ export const updateCart = async (cart: Cart) => {
   const shipping = cartTotal ? cart.shipping : 0;
   const orderTotal = cartTotal + tax + shipping;
 
-  await db.cart.update({
+  const currentCart = await db.cart.update({
     where: {
       id: cart.id,
     },
@@ -509,6 +510,7 @@ export const updateCart = async (cart: Cart) => {
       orderTotal,
     },
   });
+  return currentCart;
 };
 
 export const addToCartAction = async (prevState: any, formData: FormData) => {
