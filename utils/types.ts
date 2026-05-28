@@ -1,3 +1,5 @@
+import { Prisma } from "@prisma/client";
+
 export type actionFunction = (
   prevState: any,
   formData: FormData,
@@ -20,3 +22,10 @@ export type CartState = {
   tax: number;
   orderTotal: number;
 };
+
+// tipo prisma che include il Product nel CartItem
+// senza include CartItem avrebbe solamente ID e quantità
+// così invece ho anche nome, prezzo, immagine etc..
+export type CartItemWithProduct = Prisma.CartItemGetPayload<{
+  include: { product: true };
+}>;
