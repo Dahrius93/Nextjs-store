@@ -7,7 +7,7 @@ import {
 } from "@/components/ui/select";
 
 export enum Mode {
-  SingleProduct = "singleProduct", // render su SingleProduct page oppure su CartItem
+  SingleProduct = "singleProduct",
   CartItem = "cartItem",
 }
 
