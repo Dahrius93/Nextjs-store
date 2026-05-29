@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Button } from "../ui/button";
-import { VscCode } from "react-icons/vsc";
+import { LuLamp } from "react-icons/lu";
 
 function Logo() {
   return (
@@ -12,7 +12,7 @@ function Logo() {
     // e non sarebbe valido per l'HTML
     <Button size="icon" asChild>
       <Link href="/">
-        <VscCode className="w-6 h-6" />
+        <LuLamp className="w-6 h-6" />
       </Link>
     </Button>
   );

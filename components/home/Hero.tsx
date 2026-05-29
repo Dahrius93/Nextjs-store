@@ -10,8 +10,9 @@ function Hero() {
           We are changing the way people shop
         </h1>
         <p className="mt-8 max-w-xl text-lg leading-8 text-muted-foreground">
-          From statement furniture to everyday essentials, we bring you curated
-          pieces that elevate your living space — delivered right to your door.
+          Your home tells your story — we help you write it beautifully.
+          Discover handpicked furniture that blends comfort, craft, and
+          character, delivered with care right to your door.
         </p>
         <Button asChild size="lg" className="mt-10">
           <Link href="/products">Our Products</Link>
