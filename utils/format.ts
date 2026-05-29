@@ -9,7 +9,16 @@ export const formatCurrency = (amount: number | null) => {
 export const formatDate = (date: Date) => {
   return new Intl.DateTimeFormat("en-US", {
     year: "numeric",
-    month: "long",
     day: "numeric",
+    month: "long",
   }).format(date);
 };
+
+// per italia
+// export const formatDate = (date: Date) => {
+//   return new Intl.DateTimeFormat("it-IT", {
+//   day: "numeric",
+//   month: "long",
+//   year: "numeric",
+//   }).format(date);
+// };
