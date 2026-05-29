@@ -2,7 +2,11 @@ import { PrismaClient } from "@prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 
 const prismaClientSingleton = () => {
-  const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL });
+  // aggiunto massimo una connessione per istanza serverless
+  const adapter = new PrismaPg({
+    connectionString: process.env.DATABASE_URL,
+    max: 1,
+  });
   return new PrismaClient({ adapter });
 };
 
