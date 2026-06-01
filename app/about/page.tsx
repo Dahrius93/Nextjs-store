@@ -74,7 +74,7 @@ function AboutPage() {
         </Reveal>
         <Reveal
           delay={150}
-          className="relative h-[22rem] sm:h-[28rem] w-full overflow-hidden rounded-2xl shadow-lg"
+          className="relative h-88 sm:h-112 w-full overflow-hidden rounded-2xl shadow-lg"
         >
           <Image
             src={aboutImage}
@@ -141,7 +141,7 @@ function AboutPage() {
 
       {/* Story */}
       <div className="mt-24 grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
-        <Reveal className="relative h-[20rem] sm:h-[26rem] w-full overflow-hidden rounded-2xl shadow-lg order-last lg:order-first">
+        <Reveal className="relative h-80 sm:h-104 w-full overflow-hidden rounded-2xl shadow-lg order-last lg:order-first">
           <Image
             src={storyImage}
             alt="A signature furniture piece from our catalog"

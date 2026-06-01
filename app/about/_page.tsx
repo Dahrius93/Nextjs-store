@@ -66,7 +66,7 @@ function AboutPage() {
             <Link href="/products">Explore our collection</Link>
           </Button>
         </div>
-        <div className="relative h-[22rem] sm:h-[28rem] w-full">
+        <div className="relative h-88 sm:h-112 w-full">
           <Image
             src={aboutImage}
             alt="A beautifully furnished living room"
@@ -131,7 +131,7 @@ function AboutPage() {
 
       {/* Story */}
       <div className="mt-24 grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
-        <div className="relative h-[20rem] sm:h-[26rem] w-full order-last lg:order-first">
+        <div className="relative h-80 sm:h-104 w-full order-last lg:order-first">
           <Image
             src={storyImage}
             alt="A signature furniture piece from our catalog"
