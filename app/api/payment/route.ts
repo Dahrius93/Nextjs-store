@@ -2,11 +2,15 @@ import Stripe from "stripe";
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string);
 import { type NextRequest } from "next/server";
 import db from "@/utils/db";
+import { auth } from "@clerk/nextjs/server";
 
 export const POST = async (req: NextRequest) => {
+  const { userId } = auth();
+  // controllo utente loggato
+  if (!userId) return Response.json(null, { status: 401 });
+
   const requestHeaders = new Headers(req.headers);
   const origin = requestHeaders.get("origin");
-
   const { orderId, cartId } = await req.json();
 
   const order = await db.order.findUnique({
@@ -26,12 +30,30 @@ export const POST = async (req: NextRequest) => {
       },
     },
   });
+
+  // controllo order = carrello
   if (!order || !cart) {
     return Response.json(null, {
       status: 404,
       statusText: "Not Found",
     });
   }
+
+  // controllo ownership ordine
+  if (order.clerkId !== userId) {
+    return Response.json(null, {
+      status: 403,
+      statusText: "Forbidden, user id does not match",
+    });
+  }
+  // controllo ownership carrello
+  if (cart.clerkId !== userId) {
+    return Response.json(null, {
+      status: 403,
+      statusText: "Forbidden, user id does not match",
+    });
+  }
+
   const line_items = cart.cartItems.map((cartItem) => {
     return {
       quantity: cartItem.amount,
