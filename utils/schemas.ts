@@ -74,12 +74,12 @@ export const reviewSchema = z.object({
   productId: z.string().refine((value) => value !== "", {
     message: "Product ID cannot be empty",
   }),
-  authorName: z.string().refine((value) => value !== "", {
-    message: "Author name cannot be empty",
-  }),
-  authorImageUrl: z.string().refine((value) => value !== "", {
-    message: "Author image URL cannot be empty",
-  }),
+  // authorName: z.string().refine((value) => value !== "", {
+  //   message: "Author name cannot be empty",
+  // }),
+  // authorImageUrl: z.string().refine((value) => value !== "", {
+  //   message: "Author image URL cannot be empty",
+  // }),
   rating: z.coerce
     .number()
     .int()

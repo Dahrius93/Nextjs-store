@@ -26,7 +26,7 @@ function SubmitReview({ productId }: { productId: string }) {
         <Card className="p-8 mt-8">
           <FormContainer action={createReviewAction}>
             <input type="hidden" name="productId" value={productId} />
-            <input
+            {/* <input
               type="hidden"
               name="authorName"
               value={user?.firstName || "user"}
@@ -35,7 +35,7 @@ function SubmitReview({ productId }: { productId: string }) {
               type="hidden"
               name="authorImageUrl"
               value={user?.imageUrl || ""}
-            />
+            /> */}
             <RatingInput name="rating" />
             <TextAreaInput
               name="comment"

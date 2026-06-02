@@ -296,18 +296,18 @@ export const fetchUserFavorites = async () => {
 
 export const createReviewAction = async (
   prevState: any,
-  formData: FormData, // id, authorName, authorImageUrl.. dati input hidden
+  formData: FormData,
 ) => {
   const user = await getAuthUser();
   try {
-    const rawData = Object.fromEntries(formData);
+    const rawData = Object.fromEntries(formData); // productId, rating, comment
     const validatedFields = validateWithZodSchema(reviewSchema, rawData);
 
     await db.review.create({
       data: {
-        ...validatedFields, // non è sicuro prendere nome e immagine utente da form anche se input hidden
-        authorName: user.firstName ?? "Anonymous", // per questo motivo sovrascrivo con clerk
-        authorImageUrl: user.imageUrl, // per questo motivo sovrascrivo con clerk
+        ...validatedFields, // productId, rating, comment
+        authorName: user.firstName ?? "Anonymous", // name da clerk
+        authorImageUrl: user.imageUrl, // immagine user da clerk
         clerkId: user.id,
       },
     });
