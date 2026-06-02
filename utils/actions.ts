@@ -28,7 +28,7 @@ const getAuthUser = async () => {
   return user;
 };
 
-// check for actual user is admin else redirect
+// check if current user is an admin
 const getAdminUser = async () => {
   const user = await getAuthUser();
   if (user.id !== process.env.ADMIN_USER_ID) redirect("/");
@@ -404,7 +404,6 @@ export const fetchProductRating = async (productId: string) => {
 
 export const fetchCartItems = async () => {
   const { userId } = auth();
-
   const cart = await db.cart.findFirst({
     where: {
       clerkId: userId ?? "",
