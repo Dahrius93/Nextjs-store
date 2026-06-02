@@ -46,7 +46,7 @@ const renderError = (error: unknown): { message: string } => {
 
 //#endregion
 
-//#region fetchProducts
+//#region fetch
 
 export const fetchFeaturedProducts = async () => {
   const products = await db.product.findMany({
@@ -106,7 +106,7 @@ const includeProductClause = {
 
 //#endregion
 
-//#region admin actions
+//#region admin
 
 export const createProductAction = async (
   prevState: any,
@@ -229,7 +229,7 @@ export const updateProductImageAction = async (
 
 //#endregion
 
-//#region favorite actions
+//#region favorite
 
 export const fetchFavoriteId = async ({ productId }: { productId: string }) => {
   const user = await getAuthUser();
@@ -292,11 +292,11 @@ export const fetchUserFavorites = async () => {
 
 //#endregion
 
-//#region review actions and rating
+//#region review and rating
 
 export const createReviewAction = async (
   prevState: any,
-  formData: FormData,
+  formData: FormData, // id, authorName, authorImageUrl.. dati input hidden
 ) => {
   const user = await getAuthUser();
   try {
@@ -305,7 +305,9 @@ export const createReviewAction = async (
 
     await db.review.create({
       data: {
-        ...validatedFields,
+        ...validatedFields, // non è sicuro prendere nome e immagine utente da form anche se input hidden
+        authorName: user.firstName ?? "Anonymous", // per questo motivo sovrascrivo con clerk
+        authorImageUrl: user.imageUrl, // per questo motivo sovrascrivo con clerk
         clerkId: user.id,
       },
     });
@@ -522,13 +524,13 @@ export const addToCartAction = async (prevState: any, formData: FormData) => {
   try {
     const productId = formData.get("productId") as string;
     const amount = Number(formData.get("amount"));
-    const rawData = validateWithZodSchema(cartItemSchema, {
+    const validatedFields = validateWithZodSchema(cartItemSchema, {
       amount,
       productId,
     });
     await fetchProduct(productId);
     const cart = await fetchOrCreateCart({ userId: user.id });
-    await updateOrCreateCartItem({ cartId: cart.id, ...rawData });
+    await updateOrCreateCartItem({ cartId: cart.id, ...validatedFields });
     await updateCart(cart);
   } catch (error) {
     return renderError(error);
