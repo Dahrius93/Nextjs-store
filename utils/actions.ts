@@ -202,7 +202,7 @@ export const updateProductImageAction = async (
   prevState: any,
   formData: FormData,
 ) => {
-  await getAuthUser();
+  await getAdminUser();
   try {
     const image = formData.get("image") as File;
     const productId = formData.get("id") as string;
