@@ -301,7 +301,6 @@ export const createReviewAction = async (
   const user = await getAuthUser();
   try {
     const rawData = Object.fromEntries(formData);
-
     const validatedFields = validateWithZodSchema(reviewSchema, rawData);
 
     await db.review.create({
@@ -523,13 +522,13 @@ export const addToCartAction = async (prevState: any, formData: FormData) => {
   try {
     const productId = formData.get("productId") as string;
     const amount = Number(formData.get("amount"));
-    const validatedFields = validateWithZodSchema(cartItemSchema, {
+    const rawData = validateWithZodSchema(cartItemSchema, {
       amount,
       productId,
     });
     await fetchProduct(productId);
     const cart = await fetchOrCreateCart({ userId: user.id });
-    await updateOrCreateCartItem({ cartId: cart.id, ...validatedFields });
+    await updateOrCreateCartItem({ cartId: cart.id, ...rawData });
     await updateCart(cart);
   } catch (error) {
     return renderError(error);
