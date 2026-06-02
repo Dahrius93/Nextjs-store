@@ -1,5 +1,7 @@
 "use server";
 
+//#region import
+
 import db from "@/utils/db";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
@@ -13,6 +15,11 @@ import {
 import { deleteImage, uploadImage } from "./supabase";
 import { Cart } from "@prisma/client";
 
+//#endregion
+
+//#region getUser and renderErro
+
+// check for actual user else error
 const getAuthUser = async () => {
   const user = await currentUser();
   if (!user) {
@@ -21,18 +28,24 @@ const getAuthUser = async () => {
   return user;
 };
 
+// check for actual user is admin else redirect
 const getAdminUser = async () => {
   const user = await getAuthUser();
   if (user.id !== process.env.ADMIN_USER_ID) redirect("/");
   return user;
 };
 
+// generic error to display in a toast
 const renderError = (error: unknown): { message: string } => {
   console.log(error);
   return {
     message: error instanceof Error ? error.message : "An error occurred",
   };
 };
+
+//#endregion
+
+//#region fetchProducts
 
 export const fetchFeaturedProducts = async () => {
   const products = await db.product.findMany({
@@ -69,6 +82,31 @@ export const fetchSingleProduct = async (productId: string) => {
   return product;
 };
 
+const fetchProduct = async (productId: string) => {
+  const product = await db.product.findUnique({
+    where: {
+      id: productId,
+    },
+  });
+
+  if (!product) {
+    throw new Error("Product not found");
+  }
+  return product;
+};
+
+const includeProductClause = {
+  cartItems: {
+    include: {
+      product: true,
+    },
+  },
+};
+
+//#endregion
+
+//#region admin actions
+
 export const createProductAction = async (
   prevState: any,
   formData: FormData,
@@ -80,7 +118,6 @@ export const createProductAction = async (
     const file = formData.get("image") as File;
     const validatedFields = validateWithZodSchema(productSchema, rawData);
     const validatedFile = validateWithZodSchema(imageSchema, { image: file });
-    // console.log(validatedFile);
     const fullPath = await uploadImage(validatedFile.image);
 
     await db.product.create({
@@ -189,52 +226,30 @@ export const updateProductImageAction = async (
   }
 };
 
-// Controlla se un prodotto è nei preferiti dell'utente corrente
-// Ritorna l'id del favorito se esiste, altrimenti null
-export const fetchFavoriteId = async ({ productId }: { productId: string }) => {
-  // Recupera l'utente autenticato da Clerk
-  const user = await getAuthUser();
+//#endregion
 
-  // Cerca nella tabella Favorite un record che corrisponda
-  // a QUESTO utente + QUESTO prodotto
+//#region favorite actions
+
+export const fetchFavoriteId = async ({ productId }: { productId: string }) => {
+  const user = await getAuthUser();
   const favorite = await db.favorite.findFirst({
     where: {
       productId, // il prodotto da verificare
       clerkId: user.id, // l'utente corrente
     },
     select: {
-      id: true, // prende solo campo id, non tutto il record (più efficiente)
+      id: true,
     },
   });
-
-  // Se il favorito esiste ritorna il suo id (servirà per cancellarlo)
-  // Se non esiste ritorna null (il prodotto non è nei preferiti)
   return favorite?.id || null;
 };
 
-// Aggiunge o rimuove un prodotto dai preferiti
-//
-// Questa action NON riceve formData — tutti i dati arrivano da prevState.
-// Significa che viene usata con bind(), come il deleteProductAction
-//
-// const toggleFavorite = toggleFavoriteAction.bind(null, {
-//   productId: "prod_1",
-//   favoriteId: "fav_abc123",  // oppure null se non è nei preferiti
-//   pathname: "/products",
-// });
-//
-// bind() "cabla" quei valori come primo argomento (prevState),
-// così quando il form viene sottomesso React li passa automaticamente
-// alla action senza bisogno di hidden input.
 export const toggleFavoriteAction = async (prevState: {
   productId: string; // il prodotto da aggiungere/rimuovere
   favoriteId: string | null; // l'id del favorito (null = non è nei preferiti)
   pathname: string; // la pagina corrente, per aggiornare la cache
 }) => {
-  // Verifica che l'utente sia autenticato
   const user = await getAuthUser();
-
-  // Estrae i dati da prevState (che arrivano da bind)
   const { productId, favoriteId, pathname } = prevState;
 
   try {
@@ -254,9 +269,7 @@ export const toggleFavoriteAction = async (prevState: {
         },
       });
     }
-
     revalidatePath(pathname);
-
     return { message: favoriteId ? "Removed from Faves" : "Added to Faves" };
   } catch (error) {
     return renderError(error);
@@ -275,6 +288,10 @@ export const fetchUserFavorites = async () => {
   });
   return favorites;
 };
+
+//#endregion
+
+//#region review actions and rating
 
 export const createReviewAction = async (
   prevState: any,
@@ -351,6 +368,15 @@ export const deleteReviewAction = async (prevState: { reviewId: string }) => {
   }
 };
 
+export const findExistingReview = async (userId: string, productId: string) => {
+  return db.review.findFirst({
+    where: {
+      clerkId: userId,
+      productId,
+    },
+  });
+};
+
 export const fetchProductRating = async (productId: string) => {
   const result = await db.review.groupBy({
     by: ["productId"], // raggruppa per productId (come GROUP BY in SQL)
@@ -372,14 +398,9 @@ export const fetchProductRating = async (productId: string) => {
   };
 };
 
-export const findExistingReview = async (userId: string, productId: string) => {
-  return db.review.findFirst({
-    where: {
-      clerkId: userId,
-      productId,
-    },
-  });
-};
+//#endregion
+
+//#region cart
 
 export const fetchCartItems = async () => {
   const { userId } = auth();
@@ -393,27 +414,6 @@ export const fetchCartItems = async () => {
     },
   });
   return cart?.numItemsInCart || 0;
-};
-
-const fetchProduct = async (productId: string) => {
-  const product = await db.product.findUnique({
-    where: {
-      id: productId,
-    },
-  });
-
-  if (!product) {
-    throw new Error("Product not found");
-  }
-  return product;
-};
-
-const includeProductClause = {
-  cartItems: {
-    include: {
-      product: true,
-    },
-  },
 };
 
 export const fetchOrCreateCart = async ({
@@ -590,6 +590,10 @@ export const updateCartItemAction = async ({
   }
 };
 
+//#endregion cart
+
+//#region order
+
 export const createOrderAction = async (prevState: any, formData: FormData) => {
   const user = await getAuthUser();
   let orderId: null | string = null;
@@ -651,3 +655,5 @@ export const fetchAdminOrders = async () => {
   });
   return orders;
 };
+
+//#endregion
