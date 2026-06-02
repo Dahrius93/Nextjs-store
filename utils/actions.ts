@@ -11,6 +11,7 @@ import {
   productSchema,
   validateWithZodSchema,
   reviewSchema,
+  cartItemSchema,
 } from "./schemas";
 import { deleteImage, uploadImage } from "./supabase";
 import { Cart } from "@prisma/client";
@@ -522,9 +523,13 @@ export const addToCartAction = async (prevState: any, formData: FormData) => {
   try {
     const productId = formData.get("productId") as string;
     const amount = Number(formData.get("amount"));
+    const validatedFields = validateWithZodSchema(cartItemSchema, {
+      amount,
+      productId,
+    });
     await fetchProduct(productId);
     const cart = await fetchOrCreateCart({ userId: user.id });
-    await updateOrCreateCartItem({ productId, cartId: cart.id, amount });
+    await updateOrCreateCartItem({ cartId: cart.id, ...validatedFields });
     await updateCart(cart);
   } catch (error) {
     return renderError(error);

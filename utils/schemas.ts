@@ -90,3 +90,8 @@ export const reviewSchema = z.object({
     .min(10, { message: "Comment must be at least 10 characters long" })
     .max(1000, { message: "Comment must be at most 1000 characters long" }),
 });
+
+export const cartItemSchema = z.object({
+  amount: z.coerce.number().int().min(1).max(99),
+  productId: z.string().min(1),
+});
