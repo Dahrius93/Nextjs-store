@@ -1,5 +1,13 @@
+import type { Metadata } from "next";
 import { Separator } from "@/components/ui/separator";
 import Sidebar from "./Sidebar";
+
+// Impostato UNA volta qui: tutte le sottopagine admin ereditano il noindex
+// (dashboard, create, edit, sales…). Niente da indicizzare per Google.
+export const metadata: Metadata = {
+  title: { default: "Dashboard", template: "%s | Dashboard" },
+  robots: { index: false, follow: false },
+};
 
 function DashboardLayout({ children }: { children: React.ReactNode }) {
   return (

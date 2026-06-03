@@ -1,8 +1,14 @@
+import type { Metadata } from "next";
 import { deleteReviewAction, fetchProductReviewsByUser } from "@/utils/actions";
 import ReviewCard from "@/components/reviews/ReviewCard";
 import SectionTitle from "@/components/global/SectionTitle";
 import FormContainer from "@/components/form/FormContainer";
 import { IconButton } from "@/components/form/Buttons";
+
+export const metadata: Metadata = {
+  title: "Your Reviews",
+  robots: { index: false, follow: false },
+};
 
 async function ReviewsPage() {
   const reviews = await fetchProductReviewsByUser();

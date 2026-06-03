@@ -15,6 +15,7 @@ import {
 } from "./schemas";
 import { deleteImage, uploadImage } from "./supabase";
 import { Cart } from "@prisma/client";
+import { cache } from "react";
 
 //#endregion
 
@@ -71,7 +72,9 @@ export const fetchAllProducts = ({ search = "" }: { search: string }) => {
   });
 };
 
-export const fetchSingleProduct = async (productId: string) => {
+// cache() deduplica la query: anche se chiamata sia in generateMetadata sia
+// nel componente della stessa richiesta, Prisma colpisce il DB una volta sola.
+export const fetchSingleProduct = cache(async (productId: string) => {
   const product = await db.product.findUnique({
     where: {
       id: productId,
@@ -81,7 +84,7 @@ export const fetchSingleProduct = async (productId: string) => {
     redirect("/products");
   }
   return product;
-};
+});
 
 const fetchProduct = async (productId: string) => {
   const product = await db.product.findUnique({

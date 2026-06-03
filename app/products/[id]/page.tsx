@@ -9,6 +9,46 @@ import ShareButton from "@/components/single-product/ShareButton";
 import SubmitReview from "@/components/reviews/SubmitReview";
 import ProductReviews from "@/components/reviews/ProductReviews";
 import { auth } from "@clerk/nextjs/server";
+import { Metadata } from "next";
+
+type Props = { params: { id: string } };
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const product = await fetchSingleProduct(params.id);
+  const { name, image, company, description, price } = product;
+  const dollarsAmount = formatCurrency(price);
+
+  // Una sola fonte di verità per la descrizione, riusata in tag/OG/twitter.
+  const metaDescription = `${description.slice(0, 120)} — ${dollarsAmount} by ${company}.`;
+
+  return {
+    title: name, // → "Linen Sofa 3-Seater | Home Store"
+    description: metaDescription,
+    openGraph: {
+      title: name,
+      description: metaDescription,
+      url: `/products/${params.id}`,
+      type: "website", // "product" non è supportato dal tipo OpenGraph di Next
+      images: [
+        {
+          url: image,
+          width: 1200,
+          height: 630,
+          alt: name,
+        },
+      ],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: name,
+      description: metaDescription,
+      images: [image],
+    },
+    alternates: {
+      canonical: `/products/${params.id}`,
+    },
+  };
+}
 
 async function SingleProductPage({ params }: { params: { id: string } }) {
   const product = await fetchSingleProduct(params.id);

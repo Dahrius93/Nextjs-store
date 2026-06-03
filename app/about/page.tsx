@@ -3,6 +3,7 @@
 // rimane server side. Google vede comunque quello che c'è scritto tra i tag
 // cambia solamente che viene mostrato all'utente mano a mano che scrolla in basso
 
+import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -12,6 +13,14 @@ import Reveal from "@/components/global/Reveal";
 import { LuArmchair, LuLeaf, LuTruck, LuHeartHandshake } from "react-icons/lu";
 import aboutImage from "@/public/images/hero2.jpg";
 import storyImage from "@/public/images/product-big.jpg";
+
+export const metadata: Metadata = {
+  title: "About",
+  description:
+    "Since 1950 we've helped people turn houses into homes with thoughtfully " +
+    "designed, sustainably sourced furniture. Discover our story.",
+  alternates: { canonical: "/about" },
+};
 
 const stats = [
   { value: "70+", label: "Years of craft" },

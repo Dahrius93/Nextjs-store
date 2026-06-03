@@ -1,6 +1,12 @@
+import type { Metadata } from "next";
 import { fetchUserFavorites } from "@/utils/actions";
 import SectionTitle from "@/components/global/SectionTitle";
 import ProductsGrid from "@/components/products/ProductsGrid";
+
+export const metadata: Metadata = {
+  title: "Favorites",
+  robots: { index: false, follow: false },
+};
 
 async function FavoritesPage() {
   const favorites = await fetchUserFavorites();

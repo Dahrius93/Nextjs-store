@@ -8,9 +8,16 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
+import type { Metadata } from "next";
 import SectionTitle from "@/components/global/SectionTitle";
 import { fetchUserOrders } from "@/utils/actions";
 import { formatCurrency, formatDate } from "@/utils/format";
+
+export const metadata: Metadata = {
+  title: "Your Orders",
+  robots: { index: false, follow: false },
+};
+
 async function OrdersPage() {
   const orders = await fetchUserOrders();
 
