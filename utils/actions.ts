@@ -14,7 +14,7 @@ import {
   cartItemSchema,
 } from "./schemas";
 import { deleteImage, uploadImage } from "./supabase";
-import { Cart } from "@prisma/client";
+import { Cart, Prisma } from "@prisma/client";
 
 //#endregion
 
@@ -57,18 +57,36 @@ export const fetchFeaturedProducts = async () => {
   return products;
 };
 
-export const fetchAllProducts = ({ search = "" }: { search: string }) => {
-  return db.product.findMany({
-    where: {
-      OR: [
-        { name: { contains: search, mode: "insensitive" } },
-        { company: { contains: search, mode: "insensitive" } },
-      ],
-    },
-    orderBy: {
-      createdAt: "desc",
-    },
-  });
+export const fetchAllProducts = async ({
+  search = "",
+  page = 1,
+  limit = 9,
+}: {
+  search?: string;
+  page?: number;
+  limit?: number;
+}) => {
+  const currentPage = Math.max(1, page);
+  const where: Prisma.ProductWhereInput = {
+    OR: [
+      { name: { contains: search, mode: "insensitive" } },
+      { company: { contains: search, mode: "insensitive" } },
+    ],
+  };
+
+  const [products, total] = await Promise.all([
+    db.product.findMany({
+      where,
+      orderBy: {
+        createdAt: "desc",
+      },
+      skip: (currentPage - 1) * limit,
+      take: limit,
+    }),
+    db.product.count({ where }),
+  ]);
+
+  return { products, total };
 };
 
 export const fetchSingleProduct = async (productId: string) => {

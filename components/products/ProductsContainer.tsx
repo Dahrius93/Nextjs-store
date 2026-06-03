@@ -4,18 +4,36 @@ import { LuLayoutGrid, LuList } from "react-icons/lu";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { fetchAllProducts } from "@/utils/actions";
+import { PaginationDemo } from "./PaginaionDemo";
 import Link from "next/link";
 
 async function ProductsContainer({
   layout,
   search,
+  page = 1,
 }: {
   layout: string;
   search: string;
+  page?: number;
 }) {
-  const products = await fetchAllProducts({ search });
-  const totalProducts = products.length;
-  const searchTerm = search ? `&search=${search}` : "";
+  const limit = 9;
+  const { products, total } = await fetchAllProducts({
+    search,
+    page,
+    limit,
+  });
+  const totalPages = Math.max(Math.ceil(total / limit), 1);
+
+  const buildLayoutHref = (newLayout: string) => {
+    const params = new URLSearchParams();
+    params.set("layout", newLayout);
+    if (search) params.set("search", search);
+    if (page > 1) params.set("page", page.toString());
+    return `/products?${params.toString()}`;
+  };
+
+  const totalProducts = total;
+
   return (
     <>
       {/* HEADER */}
@@ -30,7 +48,7 @@ async function ProductsContainer({
               size="icon"
               asChild
             >
-              <Link href={`/products?layout=grid${searchTerm}`}>
+              <Link href={buildLayoutHref("grid")}>
                 <LuLayoutGrid />
               </Link>
             </Button>
@@ -39,7 +57,7 @@ async function ProductsContainer({
               size="icon"
               asChild
             >
-              <Link href={`/products?layout=list${searchTerm}`}>
+              <Link href={buildLayoutHref("list")}>
                 <LuList />
               </Link>
             </Button>
@@ -59,6 +77,16 @@ async function ProductsContainer({
           <ProductsList products={products} />
         )}
       </div>
+      {totalPages > 1 && (
+        <div className="mt-12 flex w-full justify-end">
+          <PaginationDemo
+            currentPage={page}
+            totalPages={totalPages}
+            layout={layout}
+            search={search}
+          />
+        </div>
+      )}
     </>
   );
 }

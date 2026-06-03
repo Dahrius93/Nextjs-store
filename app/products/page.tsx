@@ -1,20 +1,14 @@
-import { PaginationDemo } from "@/components/products/PaginaionDemo";
 import ProductsContainer from "@/components/products/ProductsContainer";
 
 async function ProductsPage({
   searchParams,
 }: {
-  searchParams: { layout?: string; search?: string };
+  searchParams: { layout?: string; search?: string; page?: string };
 }) {
   const layout = searchParams.layout || "grid";
   const search = searchParams.search || "";
-  return (
-    <>
-      <ProductsContainer layout={layout} search={search} />
-      <div className="mt-24">
-        <PaginationDemo />
-      </div>
-    </>
-  );
+  const page = Number(searchParams.page ?? "1");
+
+  return <ProductsContainer layout={layout} search={search} page={page} />;
 }
 export default ProductsPage;
