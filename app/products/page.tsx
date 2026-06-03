@@ -1,3 +1,4 @@
+import { PaginationDemo } from "@/components/products/PaginaionDemo";
 import ProductsContainer from "@/components/products/ProductsContainer";
 
 async function ProductsPage({
@@ -10,6 +11,9 @@ async function ProductsPage({
   return (
     <>
       <ProductsContainer layout={layout} search={search} />
+      <div className="mt-24">
+        <PaginationDemo />
+      </div>
     </>
   );
 }
