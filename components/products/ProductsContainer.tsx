@@ -3,12 +3,8 @@ import ProductsList from './ProductsList'
 import { LuLayoutGrid, LuList } from 'react-icons/lu'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
-import {
-  fetchAllProducts,
-  fetchAllProductsWithPagination,
-} from '@/utils/actions'
+import { fetchAllProductsWithPagination } from '@/utils/actions'
 import Link from 'next/link'
-import { PaginationDemo } from './PaginaionDemo'
 import { ProductsPagination } from './ProductsPagination'
 
 async function ProductsContainer({
@@ -20,13 +16,16 @@ async function ProductsContainer({
   search: string
   page?: number
 }) {
-  const limit = 9
+  const limit = 9 // product per page
   const { products, total } = await fetchAllProductsWithPagination({
     search,
-    page,
+    page, // page num
     limit,
   })
+  // calculate total page with max 9 products each
   const totalPages = Math.max(Math.ceil(total / limit), 1)
+
+  // building parameters in URL
   const buildLayoutHref = (newLayout: string) => {
     const params = new URLSearchParams()
     params.set('layout', newLayout)
@@ -35,7 +34,7 @@ async function ProductsContainer({
     return `/products?${params.toString()}`
   }
   const totalProducts = products.length
-  const searchTerm = search ? `&search=${search}` : ''
+
   return (
     <>
       {/* HEADER */}

@@ -52,10 +52,15 @@ export function ProductsPagination({
   return (
     <Pagination>
       <PaginationContent>
+        {currentPage > 1 && (
+          <PaginationItem>
+            <PaginationPrevious
+              href={buildHref(Math.max(1, currentPage - 1))}
+              isActive={currentPage > 1}
+            />
+          </PaginationItem>
+        )}
         {/* PRECEDENTE: non scende mai sotto 1 */}
-        <PaginationItem>
-          <PaginationPrevious href={buildHref(Math.max(1, currentPage - 1))} />
-        </PaginationItem>
 
         {/* NUMERI o puntini */}
         {pageNumbers.map((page, index) => (
@@ -74,11 +79,14 @@ export function ProductsPagination({
         ))}
 
         {/* SUCCESSIVA: non supera mai totalPages */}
-        <PaginationItem>
-          <PaginationNext
-            href={buildHref(Math.min(totalPages, currentPage + 1))}
-          />
-        </PaginationItem>
+        {currentPage < totalPages && (
+          <PaginationItem>
+            <PaginationNext
+              href={buildHref(Math.min(totalPages, currentPage + 1))}
+              isActive={currentPage < totalPages}
+            />
+          </PaginationItem>
+        )}
       </PaginationContent>
     </Pagination>
   )

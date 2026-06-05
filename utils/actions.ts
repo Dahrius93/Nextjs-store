@@ -58,6 +58,7 @@ export const fetchFeaturedProducts = async () => {
   return products
 }
 
+// this func is replaced with fetchAllProductsWithPagination()
 export const fetchAllProducts = ({ search = '' }: { search: string }) => {
   return db.product.findMany({
     where: {
@@ -72,6 +73,7 @@ export const fetchAllProducts = ({ search = '' }: { search: string }) => {
   })
 }
 
+// fetch all product in one page not all in db
 export const fetchAllProductsWithPagination = async ({
   search = '',
   page = 1,
@@ -88,10 +90,8 @@ export const fetchAllProductsWithPagination = async ({
   // where clause
   const where: Prisma.ProductWhereInput = {
     OR: [
-      {
-        name: { contains: search, mode: 'insensitive' },
-        company: { contains: search, mode: 'insensitive' },
-      },
+      { name: { contains: search, mode: 'insensitive' } },
+      { company: { contains: search, mode: 'insensitive' } },
     ],
   }
 
