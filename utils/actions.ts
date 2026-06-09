@@ -1,21 +1,21 @@
-"use server";
+'use server'
 
 //#region import
 
-import db from "@/utils/db";
-import { redirect } from "next/navigation";
-import { revalidatePath } from "next/cache";
-import { auth, currentUser } from "@clerk/nextjs/server";
+import db from '@/utils/db'
+import { redirect } from 'next/navigation'
+import { revalidatePath } from 'next/cache'
+import { auth, currentUser } from '@clerk/nextjs/server'
 import {
   imageSchema,
   productSchema,
   validateWithZodSchema,
   reviewSchema,
   cartItemSchema,
-} from "./schemas";
-import { deleteImage, uploadImage } from "./supabase";
-import { Cart } from "@prisma/client";
-import { cache } from "react";
+} from './schemas'
+import { deleteImage, uploadImage } from './supabase'
+import { Cart, Prisma } from '@prisma/client'
+import { cache } from 'react'
 
 //#endregion
 
@@ -23,27 +23,27 @@ import { cache } from "react";
 
 // check for actual user else error
 const getAuthUser = async () => {
-  const user = await currentUser();
+  const user = await currentUser()
   if (!user) {
-    throw new Error("You must be logged in to access this route");
+    throw new Error('You must be logged in to access this route')
   }
-  return user;
-};
+  return user
+}
 
 // check if current user is an admin
 const getAdminUser = async () => {
-  const user = await getAuthUser();
-  if (user.id !== process.env.ADMIN_USER_ID) redirect("/");
-  return user;
-};
+  const user = await getAuthUser()
+  if (user.id !== process.env.ADMIN_USER_ID) redirect('/')
+  return user
+}
 
 // generic error to display in a toast
 const renderError = (error: unknown): { message: string } => {
-  console.log(error);
+  console.log(error)
   return {
-    message: error instanceof Error ? error.message : "An error occurred",
-  };
-};
+    message: error instanceof Error ? error.message : 'An error occurred',
+  }
+}
 
 //#endregion
 
@@ -54,23 +54,58 @@ export const fetchFeaturedProducts = async () => {
     where: {
       featured: true,
     },
-  });
-  return products;
-};
+  })
+  return products
+}
 
-export const fetchAllProducts = ({ search = "" }: { search: string }) => {
+// this func is replaced with fetchAllProductsWithPagination()
+export const fetchAllProducts = ({ search = '' }: { search: string }) => {
   return db.product.findMany({
     where: {
       OR: [
-        { name: { contains: search, mode: "insensitive" } },
-        { company: { contains: search, mode: "insensitive" } },
+        { name: { contains: search, mode: 'insensitive' } },
+        { company: { contains: search, mode: 'insensitive' } },
       ],
     },
     orderBy: {
-      createdAt: "desc",
+      createdAt: 'desc',
     },
-  });
-};
+  })
+}
+
+// fetch all product in one page not all in db
+export const fetchAllProductsWithPagination = async ({
+  search = '',
+  page = 1,
+  limit = 9,
+}: {
+  search: string
+  page?: number
+  limit?: number
+}) => {
+  // controllo parametro pagina (per evitare ?page=-5)
+  const safePage = Number.isFinite(page) ? page : 1
+  const currentPage = Math.max(1, safePage)
+
+  // where clause
+  const where: Prisma.ProductWhereInput = {
+    OR: [
+      { name: { contains: search, mode: 'insensitive' } },
+      { company: { contains: search, mode: 'insensitive' } },
+    ],
+  }
+
+  const [products, total] = await Promise.all([
+    db.product.findMany({
+      where,
+      orderBy: { createdAt: 'desc' },
+      skip: (currentPage - 1) * limit, // quante righe salto
+      take: limit, // quante righe prendo
+    }),
+    db.product.count({ where }), // quante righe ci sono in totale
+  ])
+  return { products, total }
+}
 
 // cache() deduplica la query: anche se chiamata sia in generateMetadata sia
 // nel componente della stessa richiesta, Prisma colpisce il DB una volta sola.
@@ -79,25 +114,25 @@ export const fetchSingleProduct = cache(async (productId: string) => {
     where: {
       id: productId,
     },
-  });
+  })
   if (!product) {
-    redirect("/products");
+    redirect('/products')
   }
-  return product;
-});
+  return product
+})
 
 const fetchProduct = async (productId: string) => {
   const product = await db.product.findUnique({
     where: {
       id: productId,
     },
-  });
+  })
 
   if (!product) {
-    throw new Error("Product not found");
+    throw new Error('Product not found')
   }
-  return product;
-};
+  return product
+}
 
 const includeProductClause = {
   cartItems: {
@@ -105,7 +140,7 @@ const includeProductClause = {
       product: true,
     },
   },
-};
+}
 
 //#endregion
 
@@ -115,14 +150,14 @@ export const createProductAction = async (
   prevState: any,
   formData: FormData,
 ): Promise<{ message: string }> => {
-  const user = await getAuthUser();
+  const user = await getAuthUser()
 
   try {
-    const rawData = Object.fromEntries(formData);
-    const file = formData.get("image") as File;
-    const validatedFields = validateWithZodSchema(productSchema, rawData);
-    const validatedFile = validateWithZodSchema(imageSchema, { image: file });
-    const fullPath = await uploadImage(validatedFile.image);
+    const rawData = Object.fromEntries(formData)
+    const file = formData.get('image') as File
+    const validatedFields = validateWithZodSchema(productSchema, rawData)
+    const validatedFile = validateWithZodSchema(imageSchema, { image: file })
+    const fullPath = await uploadImage(validatedFile.image)
 
     await db.product.create({
       data: {
@@ -130,62 +165,62 @@ export const createProductAction = async (
         image: fullPath,
         clerkId: user.id,
       },
-    });
+    })
   } catch (error) {
-    return renderError(error);
+    return renderError(error)
   }
-  redirect("/admin/products");
-};
+  redirect('/admin/products')
+}
 
 export const fetchAdminProducts = async () => {
-  await getAdminUser();
+  await getAdminUser()
   const products = await db.product.findMany({
     orderBy: {
-      createdAt: "desc",
+      createdAt: 'desc',
     },
-  });
-  return products;
-};
+  })
+  return products
+}
 
 export const deleteProductAction = async (prevState: { productId: string }) => {
-  const { productId } = prevState;
-  await getAdminUser();
+  const { productId } = prevState
+  await getAdminUser()
 
   try {
     const product = await db.product.delete({
       where: {
         id: productId,
       },
-    });
-    await deleteImage(product.image);
-    revalidatePath("/admin/products");
-    return { message: "product removed" };
+    })
+    await deleteImage(product.image)
+    revalidatePath('/admin/products')
+    return { message: 'product removed' }
   } catch (error) {
-    return renderError(error);
+    return renderError(error)
   }
-};
+}
 
 export const fetchAdminProductDetails = async (productId: string) => {
-  await getAdminUser();
+  await getAdminUser()
   const product = await db.product.findUnique({
     where: {
       id: productId,
     },
-  });
-  if (!product) redirect("/admin/products");
-  return product;
-};
+  })
+  if (!product) redirect('/admin/products')
+  return product
+}
 
 export const updateProductAction = async (
   prevState: any,
   formData: FormData,
 ) => {
-  await getAdminUser();
+  await getAdminUser()
   try {
-    const productId = formData.get("id") as string;
-    const rawData = Object.fromEntries(formData);
+    const productId = formData.get('id') as string
+    const rawData = Object.fromEntries(formData)
 
-    const validatedFields = validateWithZodSchema(productSchema, rawData);
+    const validatedFields = validateWithZodSchema(productSchema, rawData)
 
     await db.product.update({
       where: {
@@ -194,27 +229,27 @@ export const updateProductAction = async (
       data: {
         ...validatedFields,
       },
-    });
-    revalidatePath(`/admin/products/${productId}/edit`);
-    return { message: "Product updated successfully" };
+    })
+    revalidatePath(`/admin/products/${productId}/edit`)
+    return { message: 'Product updated successfully' }
   } catch (error) {
-    return renderError(error);
+    return renderError(error)
   }
-};
+}
 
 export const updateProductImageAction = async (
   prevState: any,
   formData: FormData,
 ) => {
-  await getAdminUser();
+  await getAdminUser()
   try {
-    const image = formData.get("image") as File;
-    const productId = formData.get("id") as string;
-    const oldImageUrl = formData.get("url") as string;
+    const image = formData.get('image') as File
+    const productId = formData.get('id') as string
+    const oldImageUrl = formData.get('url') as string
 
-    const validatedFile = validateWithZodSchema(imageSchema, { image });
-    const fullPath = await uploadImage(validatedFile.image);
-    await deleteImage(oldImageUrl);
+    const validatedFile = validateWithZodSchema(imageSchema, { image })
+    const fullPath = await uploadImage(validatedFile.image)
+    await deleteImage(oldImageUrl)
     await db.product.update({
       where: {
         id: productId,
@@ -222,20 +257,20 @@ export const updateProductImageAction = async (
       data: {
         image: fullPath,
       },
-    });
-    revalidatePath(`/admin/products/${productId}/edit`);
-    return { message: "Product Image updated successfully" };
+    })
+    revalidatePath(`/admin/products/${productId}/edit`)
+    return { message: 'Product Image updated successfully' }
   } catch (error) {
-    return renderError(error);
+    return renderError(error)
   }
-};
+}
 
 //#endregion
 
 //#region favorite
 
 export const fetchFavoriteId = async ({ productId }: { productId: string }) => {
-  const user = await getAuthUser();
+  const user = await getAuthUser()
   const favorite = await db.favorite.findFirst({
     where: {
       productId, // il prodotto da verificare
@@ -244,17 +279,17 @@ export const fetchFavoriteId = async ({ productId }: { productId: string }) => {
     select: {
       id: true,
     },
-  });
-  return favorite?.id || null;
-};
+  })
+  return favorite?.id || null
+}
 
 export const toggleFavoriteAction = async (prevState: {
-  productId: string; // il prodotto da aggiungere/rimuovere
-  favoriteId: string | null; // l'id del favorito (null = non è nei preferiti)
-  pathname: string; // la pagina corrente, per aggiornare la cache
+  productId: string // il prodotto da aggiungere/rimuovere
+  favoriteId: string | null // l'id del favorito (null = non è nei preferiti)
+  pathname: string // la pagina corrente, per aggiornare la cache
 }) => {
-  const user = await getAuthUser();
-  const { productId, favoriteId, pathname } = prevState;
+  const user = await getAuthUser()
+  const { productId, favoriteId, pathname } = prevState
 
   try {
     if (favoriteId) {
@@ -263,7 +298,7 @@ export const toggleFavoriteAction = async (prevState: {
         where: {
           id: favoriteId,
         },
-      });
+      })
     } else {
       // Se favoriteId è null → il prodotto NON è nei preferiti → AGGIUNGI
       await db.favorite.create({
@@ -271,17 +306,17 @@ export const toggleFavoriteAction = async (prevState: {
           productId,
           clerkId: user.id,
         },
-      });
+      })
     }
-    revalidatePath(pathname);
-    return { message: favoriteId ? "Removed from Faves" : "Added to Faves" };
+    revalidatePath(pathname)
+    return { message: favoriteId ? 'Removed from Faves' : 'Added to Faves' }
   } catch (error) {
-    return renderError(error);
+    return renderError(error)
   }
-};
+}
 
 export const fetchUserFavorites = async () => {
-  const user = await getAuthUser();
+  const user = await getAuthUser()
   const favorites = await db.favorite.findMany({
     where: {
       clerkId: user.id,
@@ -289,9 +324,9 @@ export const fetchUserFavorites = async () => {
     include: {
       product: true, // left join della tabella product su favorites (favorite tab principale)
     },
-  });
-  return favorites;
-};
+  })
+  return favorites
+}
 
 //#endregion
 
@@ -301,25 +336,25 @@ export const createReviewAction = async (
   prevState: any,
   formData: FormData,
 ) => {
-  const user = await getAuthUser();
+  const user = await getAuthUser()
   try {
-    const rawData = Object.fromEntries(formData); // productId, rating, comment
-    const validatedFields = validateWithZodSchema(reviewSchema, rawData);
+    const rawData = Object.fromEntries(formData) // productId, rating, comment
+    const validatedFields = validateWithZodSchema(reviewSchema, rawData)
 
     await db.review.create({
       data: {
         ...validatedFields, // productId, rating, comment
-        authorName: user.firstName ?? "Anonymous", // name da clerk
+        authorName: user.firstName ?? 'Anonymous', // name da clerk
         authorImageUrl: user.imageUrl, // immagine user da clerk
         clerkId: user.id,
       },
-    });
-    revalidatePath(`/products/${validatedFields.productId}`);
-    return { message: "Review submitted successfully" };
+    })
+    revalidatePath(`/products/${validatedFields.productId}`)
+    return { message: 'Review submitted successfully' }
   } catch (error) {
-    return renderError(error);
+    return renderError(error)
   }
-};
+}
 
 export const fetchProductReviews = async (productId: string) => {
   const reviews = await db.review.findMany({
@@ -327,14 +362,14 @@ export const fetchProductReviews = async (productId: string) => {
       productId,
     },
     orderBy: {
-      createdAt: "desc",
+      createdAt: 'desc',
     },
-  });
-  return reviews;
-};
+  })
+  return reviews
+}
 
 export const fetchProductReviewsByUser = async () => {
-  const user = await getAuthUser();
+  const user = await getAuthUser()
   const reviews = await db.review.findMany({
     where: {
       clerkId: user.id,
@@ -350,13 +385,13 @@ export const fetchProductReviewsByUser = async () => {
         },
       },
     },
-  });
-  return reviews;
-};
+  })
+  return reviews
+}
 
 export const deleteReviewAction = async (prevState: { reviewId: string }) => {
-  const { reviewId } = prevState;
-  const user = await getAuthUser();
+  const { reviewId } = prevState
+  const user = await getAuthUser()
 
   try {
     await db.review.delete({
@@ -364,14 +399,14 @@ export const deleteReviewAction = async (prevState: { reviewId: string }) => {
         id: reviewId,
         clerkId: user.id,
       },
-    });
+    })
 
-    revalidatePath("/reviews");
-    return { message: "Review deleted successfully" };
+    revalidatePath('/reviews')
+    return { message: 'Review deleted successfully' }
   } catch (error) {
-    return renderError(error);
+    return renderError(error)
   }
-};
+}
 
 export const findExistingReview = async (userId: string, productId: string) => {
   return db.review.findFirst({
@@ -379,12 +414,12 @@ export const findExistingReview = async (userId: string, productId: string) => {
       clerkId: userId,
       productId,
     },
-  });
-};
+  })
+}
 
 export const fetchProductRating = async (productId: string) => {
   const result = await db.review.groupBy({
-    by: ["productId"], // raggruppa per productId (come GROUP BY in SQL)
+    by: ['productId'], // raggruppa per productId (come GROUP BY in SQL)
     _avg: {
       rating: true, // calcola la media del campo rating
     },
@@ -394,48 +429,48 @@ export const fetchProductRating = async (productId: string) => {
     where: {
       productId, // filtra solo le review di questo prodotto
     },
-  });
+  })
 
   // empty array if no reviews
   return {
     rating: result[0]?._avg.rating?.toFixed(1) ?? 0,
     count: result[0]?._count.rating ?? 0,
-  };
-};
+  }
+}
 
 //#endregion
 
 //#region cart
 
 export const fetchCartItems = async () => {
-  const { userId } = auth();
+  const { userId } = auth()
   const cart = await db.cart.findFirst({
     where: {
-      clerkId: userId ?? "",
+      clerkId: userId ?? '',
     },
     select: {
       numItemsInCart: true,
     },
-  });
-  return cart?.numItemsInCart || 0;
-};
+  })
+  return cart?.numItemsInCart || 0
+}
 
 export const fetchOrCreateCart = async ({
   userId,
   errorOnFailure = false,
 }: {
-  userId: string;
-  errorOnFailure?: boolean;
+  userId: string
+  errorOnFailure?: boolean
 }) => {
   let cart = await db.cart.findFirst({
     where: {
       clerkId: userId,
     },
     include: includeProductClause, // perchè vogliamo iterare anche su cartItems. quindi includiamo products
-  });
+  })
 
   if (!cart && errorOnFailure) {
-    throw new Error("Cart not found");
+    throw new Error('Cart not found')
   }
 
   if (!cart) {
@@ -444,27 +479,27 @@ export const fetchOrCreateCart = async ({
         clerkId: userId,
       },
       include: includeProductClause, // perchè vogliamo iterare anche su cartItems. quindi includiamo products
-    });
+    })
   }
 
-  return cart;
-};
+  return cart
+}
 
 const updateOrCreateCartItem = async ({
   productId,
   cartId,
   amount,
 }: {
-  productId: string;
-  cartId: string;
-  amount: number;
+  productId: string
+  cartId: string
+  amount: number
 }) => {
   let cartItem = await db.cartItem.findFirst({
     where: {
       productId,
       cartId,
     },
-  });
+  })
 
   if (cartItem) {
     cartItem = await db.cartItem.update({
@@ -474,13 +509,13 @@ const updateOrCreateCartItem = async ({
       data: {
         amount: cartItem.amount + amount,
       },
-    });
+    })
   } else {
     cartItem = await db.cartItem.create({
       data: { amount, productId, cartId },
-    });
+    })
   }
-};
+}
 
 export const updateCart = async (cart: Cart) => {
   const cartItems = await db.cartItem.findMany({
@@ -491,20 +526,20 @@ export const updateCart = async (cart: Cart) => {
       product: true, // Include the related product
     },
     orderBy: {
-      createdAt: "asc",
+      createdAt: 'asc',
     },
-  });
+  })
 
-  let numItemsInCart = 0;
-  let cartTotal = 0;
+  let numItemsInCart = 0
+  let cartTotal = 0
 
   for (const item of cartItems) {
-    numItemsInCart += item.amount;
-    cartTotal += item.amount * item.product.price;
+    numItemsInCart += item.amount
+    cartTotal += item.amount * item.product.price
   }
-  const tax = cart.taxRate * cartTotal;
-  const shipping = cartTotal ? cart.shipping : 0;
-  const orderTotal = cartTotal + tax + shipping;
+  const tax = cart.taxRate * cartTotal
+  const shipping = cartTotal ? cart.shipping : 0
+  const orderTotal = cartTotal + tax + shipping
 
   const currentCart = await db.cart.update({
     where: {
@@ -518,69 +553,69 @@ export const updateCart = async (cart: Cart) => {
       orderTotal,
     },
     include: includeProductClause,
-  });
-  return { currentCart, cartItems };
-};
+  })
+  return { currentCart, cartItems }
+}
 
 export const addToCartAction = async (prevState: any, formData: FormData) => {
-  const user = await getAuthUser();
+  const user = await getAuthUser()
   try {
-    const productId = formData.get("productId") as string;
-    const amount = Number(formData.get("amount"));
+    const productId = formData.get('productId') as string
+    const amount = Number(formData.get('amount'))
     const validatedFields = validateWithZodSchema(cartItemSchema, {
       amount,
       productId,
-    });
-    await fetchProduct(productId);
-    const cart = await fetchOrCreateCart({ userId: user.id });
-    await updateOrCreateCartItem({ cartId: cart.id, ...validatedFields });
-    await updateCart(cart);
+    })
+    await fetchProduct(productId)
+    const cart = await fetchOrCreateCart({ userId: user.id })
+    await updateOrCreateCartItem({ cartId: cart.id, ...validatedFields })
+    await updateCart(cart)
   } catch (error) {
-    return renderError(error);
+    return renderError(error)
   }
-  redirect("/cart");
-};
+  redirect('/cart')
+}
 
 export const removeCartItemAction = async (
   prevState: any,
   formData: FormData,
 ) => {
-  const user = await getAuthUser();
+  const user = await getAuthUser()
   try {
-    const cartItemId = formData.get("id") as string;
+    const cartItemId = formData.get('id') as string
     const cart = await fetchOrCreateCart({
       userId: user.id,
       errorOnFailure: true,
-    });
+    })
     await db.cartItem.delete({
       where: {
         id: cartItemId,
         cartId: cart.id,
       },
-    });
+    })
 
-    await updateCart(cart);
-    revalidatePath("/cart");
-    return { message: "Item removed from cart" };
+    await updateCart(cart)
+    revalidatePath('/cart')
+    return { message: 'Item removed from cart' }
   } catch (error) {
-    return renderError(error);
+    return renderError(error)
   }
-};
+}
 
 export const updateCartItemAction = async ({
   amount,
   cartItemId,
 }: {
-  amount: number;
-  cartItemId: string;
+  amount: number
+  cartItemId: string
 }) => {
-  const user = await getAuthUser();
+  const user = await getAuthUser()
 
   try {
     const cart = await fetchOrCreateCart({
       userId: user.id,
       errorOnFailure: true,
-    });
+    })
     await db.cartItem.update({
       where: {
         id: cartItemId,
@@ -589,35 +624,35 @@ export const updateCartItemAction = async ({
       data: {
         amount,
       },
-    });
-    await updateCart(cart);
-    revalidatePath("/cart");
-    return { message: "cart updated" };
+    })
+    await updateCart(cart)
+    revalidatePath('/cart')
+    return { message: 'cart updated' }
   } catch (error) {
-    return renderError(error);
+    return renderError(error)
   }
-};
+}
 
 //#endregion cart
 
 //#region order
 
 export const createOrderAction = async (prevState: any, formData: FormData) => {
-  const user = await getAuthUser();
-  let orderId: null | string = null;
-  let cartId: null | string = null;
+  const user = await getAuthUser()
+  let orderId: null | string = null
+  let cartId: null | string = null
   try {
     const cart = await fetchOrCreateCart({
       userId: user.id,
       errorOnFailure: true,
-    });
-    cartId = cart.id;
+    })
+    cartId = cart.id
     await db.order.deleteMany({
       where: {
         clerkId: user.id,
         isPaid: false,
       },
-    });
+    })
 
     const order = await db.order.create({
       data: {
@@ -628,40 +663,40 @@ export const createOrderAction = async (prevState: any, formData: FormData) => {
         shipping: cart.shipping,
         email: user.emailAddresses[0].emailAddress,
       },
-    });
-    orderId = order.id;
+    })
+    orderId = order.id
   } catch (error) {
-    return renderError(error);
+    return renderError(error)
   }
-  redirect(`/checkout?orderId=${orderId}&cartId=${cartId}`);
-};
+  redirect(`/checkout?orderId=${orderId}&cartId=${cartId}`)
+}
 
 export const fetchUserOrders = async () => {
-  const user = await getAuthUser();
+  const user = await getAuthUser()
   const orders = await db.order.findMany({
     where: {
       clerkId: user.id,
       isPaid: true,
     },
     orderBy: {
-      createdAt: "desc",
+      createdAt: 'desc',
     },
-  });
-  return orders;
-};
+  })
+  return orders
+}
 
 export const fetchAdminOrders = async () => {
-  await getAdminUser();
+  await getAdminUser()
 
   const orders = await db.order.findMany({
     where: {
       isPaid: true,
     },
     orderBy: {
-      createdAt: "desc",
+      createdAt: 'desc',
     },
-  });
-  return orders;
-};
+  })
+  return orders
+}
 
 //#endregion

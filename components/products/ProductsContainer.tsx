@@ -1,45 +1,64 @@
-import ProductsGrid from "./ProductsGrid";
-import ProductsList from "./ProductsList";
-import { LuLayoutGrid, LuList } from "react-icons/lu";
-import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
-import { fetchAllProducts } from "@/utils/actions";
-import Link from "next/link";
+import ProductsGrid from './ProductsGrid'
+import ProductsList from './ProductsList'
+import { LuLayoutGrid, LuList } from 'react-icons/lu'
+import { Button } from '@/components/ui/button'
+import { Separator } from '@/components/ui/separator'
+import { fetchAllProductsWithPagination } from '@/utils/actions'
+import Link from 'next/link'
+import { ProductsPagination } from './ProductsPagination'
 
 async function ProductsContainer({
   layout,
   search,
+  page = 1,
 }: {
-  layout: string;
-  search: string;
+  layout: string
+  search: string
+  page?: number
 }) {
-  const products = await fetchAllProducts({ search });
-  const totalProducts = products.length;
-  const searchTerm = search ? `&search=${search}` : "";
+  const limit = 9 // product per page
+  const { products, total } = await fetchAllProductsWithPagination({
+    search,
+    page, // page num
+    limit,
+  })
+  // calculate total page with max 9 products each
+  const totalPages = Math.max(Math.ceil(total / limit), 1)
+
+  // building parameters in URL
+  const buildLayoutHref = (newLayout: string) => {
+    const params = new URLSearchParams()
+    params.set('layout', newLayout)
+    if (search) params.set('search', search)
+    if (page > 1) params.set('page', String(page))
+    return `/products?${params.toString()}`
+  }
+  const totalProducts = products.length
+
   return (
     <>
       {/* HEADER */}
       <section>
         <div className="flex justify-between items-center">
           <h4 className="font-medium text-lg">
-            {totalProducts} product{totalProducts > 1 && "s"}
+            {total} product{total !== 1 && 's'}
           </h4>
           <div className="flex gap-x-4">
             <Button
-              variant={layout === "grid" ? "default" : "ghost"}
+              variant={layout === 'grid' ? 'default' : 'ghost'}
               size="icon"
               asChild
             >
-              <Link href={`/products?layout=grid${searchTerm}`}>
+              <Link href={buildLayoutHref('grid')}>
                 <LuLayoutGrid />
               </Link>
             </Button>
             <Button
-              variant={layout === "list" ? "default" : "ghost"}
+              variant={layout === 'list' ? 'default' : 'ghost'}
               size="icon"
               asChild
             >
-              <Link href={`/products?layout=list${searchTerm}`}>
+              <Link href={buildLayoutHref('list')}>
                 <LuList />
               </Link>
             </Button>
@@ -53,13 +72,24 @@ async function ProductsContainer({
           <h5 className="text-2xl mt-16">
             Sorry, no products matched your search...
           </h5>
-        ) : layout === "grid" ? (
+        ) : layout === 'grid' ? (
           <ProductsGrid products={products} />
         ) : (
           <ProductsList products={products} />
         )}
       </div>
+      {/* PAGINATION */}
+      {totalPages > 1 && (
+        <div className="mt-12">
+          <ProductsPagination
+            currentPage={page}
+            totalPages={totalPages}
+            layout={layout}
+            search={search}
+          />
+        </div>
+      )}
     </>
-  );
+  )
 }
-export default ProductsContainer;
+export default ProductsContainer
